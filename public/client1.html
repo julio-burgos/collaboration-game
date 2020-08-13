@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Jugador 1</title>
+		<meta charset="UTF-8">
+		<link rel="icon" href="a.png">
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/8.5.1/nouislider.min.css">
+		<link rel="stylesheet" href="client.css" type="text/css">
+		
+		<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+		
+	</head>
+	<body>
+		<div id="normalMode">            
+			
+			<div id="topBar_wrapper" class="animated fadeInDown">
+				<div id="topBar">
+					<div class="topBar_item">JUGADOR 1</div>
+					
+					<a   href="/" class="menu waves-effect waves">MENU</a>
+				</div>
+			</div>            
+			<div id="mainview">
+				<div id='infoBox'>
+					<div>
+						<div>OBJETIVO&emsp;</div>
+						<div style="border-top:1px solid #afafaf; width:100%;"></div>
+						<div>ACTUAL&emsp;</div>
+					</div>
+					<div>
+						<div id="objetivo_texto">100.00 <small>L/s</small></div>
+						<div style="border-top:1px solid #afafaf; width:100%;"></div>
+						<div id="caudalValue">--- <small>L/s</small></div>
+					</div>
+				</div>
+				
+				<div id="slider-range" style='width:90%; position:absolute; right:5vw;'></div>
+
+			</div>
+		</div>
+		<div id="errorMode">
+			<div id="errorView" >
+					<div class="specialREV">JUGADOR 1 OCUPADO</div>
+					<a   href="/" class="specialREV waves-effect waves">VOLVER AL MENU</a>
+			</div>
+		</div>
+		
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/js/materialize.min.js"></script>
+        <script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+		<script type="text/javascript" src="nouislider/nouislider.min.js"></script>
+
+		
+		<script>
+			
+			var $caudalValue = $('#caudalValue');
+			var $objetivo_textoValue = $('#objetivo_texto');
+			var socket= io.connect();
+			
+			var rangeSlider = document.getElementById('slider-range');
+			noUiSlider.create(rangeSlider, {
+				start: 9,
+				pips: {
+					mode: 'steps',
+					density: 2
+				},
+				connect: 'lower',
+				range: {
+					'min': [  0.001 ],
+					'max': [ 100 ]                    
+				},
+				tooltips: [ false ]
+			});            
+			
+			rangeSlider.noUiSlider.on('update', function( values, handle ) {
+				var myNewValue = values[handle];
+				var messageDetails={  
+					message : myNewValue,
+					typ : "C1"
+				}; 
+				socket.emit('send message', messageDetails);
+				
+			});
+			
+
+			
+			
+			jQuery(function($){
+				
+				$(document).ready(function(){
+					
+					socket.emit('new user',"client1",function(data){
+						if(!data){
+							$("#errorMode").show();
+							socket.disconnect();
+						}else{
+							socket.emit('objective');
+							$("#normalMode").show();
+						}
+					});                    
+				});
+
+				socket.on('new message', function(data){
+					
+					$caudalValue.show();
+					$caudalValue.html( data[0].toFixed(1)+' <small>L/s</small>' );
+				});
+
+				socket.on('objective', function(data){
+					$objetivo_textoValue.html( data.objective.C.toFixed(1)+' <small>L/s</small>' );
+				});
+				
+				
+				
+			});		
+		</script>
+	</body>
+</html>

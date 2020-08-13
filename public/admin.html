@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Administrador</title>
+	<meta charset="UTF-8"> 
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
+	<link rel="stylesheet" href="admin.css" type="text/css">
+	<link rel="icon" href="a.png">
+
+	<!--Let browser know website is optimized for mobile-->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+</head>
+<body>
+	<div id="normalMode" >
+		<div id="topBar_wrapper" class="animated fadeInDown">
+			<div id="topBar">
+				<div class="topBar_item truncate">ADMINSTRADOR</div>
+				<div class="switch">
+					
+					<label>
+					<input id="myonoffswitch" type="checkbox" checked>
+					<span class="lever"></span>
+					</label>
+					
+				</div>
+				<div class="menu waves-effect waves-green" onclick="newConfig()">RANDOM</div>
+				<a   href="/" class="menu waves-effect waves">MENU</a>
+
+			</div>
+
+		</div>
+
+		<div id="mainview" >
+
+			<div>
+				<div id="graph">
+					<div class="demo-container">       
+						<div id="placeholder1" class="demo-placeholder"></div>
+					</div>    
+					<div class="graphLabel">CAUDAL</div>
+				</div>
+				<div id="graph">
+					<div class="demo-container">
+						<div id="placeholder2" class="demo-placeholder"></div>
+					</div>
+					<div class="graphLabel">CAUDAL JUGADOR 1 </div>
+				</div>
+			</div>
+			<div>
+				<div id="graph">
+					<div class="demo-container">
+						<div id="placeholder3" class="demo-placeholder"></div>
+					</div>
+					<div class="graphLabel">TEMPERATURA</div>
+				</div>
+				<div id="graph">
+					<div class="demo-container">
+						<div id="placeholder4" class="demo-placeholder"></div>
+					</div>
+					<div class="graphLabel">CAUDAL JUGADOR 2 </div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="errorMode">
+		<div id="errorView" >
+				<div class="specialREV">ADMINISTRADOR OCUPADO</div>
+				<a   href="/" class="specialREV waves-effect waves">VOLVER AL MENU</a>
+		</div>
+	</div>
+	
+	<!--Import jQuery before materialize.js-->
+	<script type="text/javascript" src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/js/materialize.min.js"></script>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+	<script type="text/javascript" src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+	
+	
+	<script src="index_script_flot.js" type="text/javascript"></script>
+	<script>
+		var socket = io.connect();
+		
+		sessionStorage.setItem("CA",undefined);
+		sessionStorage.setItem("TA",undefined);
+		sessionStorage.setItem("C2",undefined);
+		sessionStorage.setItem("C1",undefined);
+
+
+		function newConfig(){
+			socket.emit('new objective');
+		};
+
+		var gph_CA, gph_C1, gph_TA, gph_C2;
+
+		
+		jQuery(function($){
+			
+			$(document).ready(function(){
+  
+				socket.emit('new user',"admin",function(data){
+					
+					if(!data){
+						$("#errorMode").show();
+						socket.disconnect(); 
+					}else{
+						$("#normalMode").show();
+
+						socket.emit('objective');
+
+						gph_CA = new render("#placeholder1","CA","#000000","rgba(74, 71, 71, 0.40)",-100,[-5,205]);
+						gph_C1 = new render("#placeholder2","C1","#0f2daa","rgba(143, 199, 234, 0.40)",-100,[-5,105]);
+						gph_TA = new render("#placeholder3","TA","#000000","rgba(74, 71, 71, 0.40)",-100,[-5,105]);
+						gph_C2 = new render("#placeholder4","C2","#d93b3b","rgba(226, 97, 97, 0.40)",-100,[-5,105]);
+					}
+				}); 
+			});
+
+			socket.on('new message', function(data){
+				sessionStorage.setItem( "CA" , data[0] );
+				sessionStorage.setItem( "TA" , data[1] );
+				sessionStorage.setItem( "C1" , data[2] );
+				sessionStorage.setItem( "C2" , data[3] );
+			});
+
+			socket.on('objective', function(data){
+				sessionStorage.setItem( "CA" , data.CA );
+				sessionStorage.setItem( "TA" , data.TA );
+				sessionStorage.setItem( "C1" , data.C1 );
+				sessionStorage.setItem( "C2" , data.C2 );
+				gph_CA.set_markHeight( data.objective.C );
+				gph_TA.set_markHeight( data.objective.T );
+				gph_C1.set_markHeight( data.objective.C1 );
+				gph_C2.set_markHeight( data.objective.C2 );					
+			});            
+			
+		}); 
+	</script>
+</body>
+</html >
